@@ -38,7 +38,17 @@
                 </div>
             </div>
         </div>
-        <div class="col-xs-12 col-md-8"></div>
+        <div class="col-xs-12 col-md-8">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page - 1))"><i class="fas fa-fw fa-chevron-left"></i></button></li>
+                    <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page))">@(Page + 1)</button></li>
+                    <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 1))">@(Page + 2)</button></li>
+                    <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 2))">@(Page + 3)</button></li>
+                    <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 1))"><i class="fas fa-fw fa-chevron-right"></i></button></li>
+                </ul>
+            </nav>
+        </div>
     </div>
     <hr />
     <div class="row">
@@ -79,6 +89,7 @@
     private string SearchText { get; set; } = "";
     private bool Loaded { get; set; } = false;
     private int ElementsPerPage { get; set; } = 5;
+    private int Page { get; set; } = 0;
 
     List<S3Object> files = new List<S3Object>();
 
@@ -90,7 +101,7 @@
     private async Task LoadFilesAsync()
     {
         Loaded = false;
-        files = (await S3BrowserService.GetFileListAsync(BucketName, SearchText, ElementsPerPage)).ToList();
+        files = (await S3BrowserService.GetFileListAsync(BucketName, SearchText, ElementsPerPage, Page * ElementsPerPage)).ToList();
         Loaded = true;
     }
 
@@ -111,6 +122,12 @@
     private async Task SetElementsPerPage(int elementsPerPage)
     {
         ElementsPerPage = elementsPerPage;
+        await LoadFilesAsync();
+    }
+
+    private async Task GoToPage(int page)
+    {
+        Page = page;
         await LoadFilesAsync();
     }
 }
