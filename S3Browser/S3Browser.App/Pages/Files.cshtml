@@ -1,0 +1,59 @@
+﻿@using S3Browser.App.Services
+@using Amazon.S3.Model;
+
+@page "/buckets/{bucketName}"
+@inject S3BrowserService S3BrowserService
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="jumbotron w-100">
+            <h1 class="display-4">S3 Browser</h1>
+            <hr />
+            <p class="text-muted">List of file from bucket: <b>@BucketName</b></p>
+        </div>
+    </div>
+    <div class="row form-group">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search files in bucket by name" bind="@SearchText" />
+            <div class="input-group-prepend">
+                <button class="btn btn-outline-primary" type="button" onclick="@LoadFilesAsync"><i class="fas fa-fw @(Loaded ? "fa-search" : "fa-circle-notch fa-spin")"></i></button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        @if (Loaded)
+        {
+            <ul class="list-group">
+                @foreach (var file in files)
+                {
+                    <li class="list-group-item">
+                        <span><i class="fas fa-fw fa-box mr-1"></i> @file.Key</span>
+                        <small>(@file.LastModified)</small> 
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@functions {
+
+    [Parameter]
+    private string BucketName { get; set; }
+    private string SearchText { get; set; } = "";
+    private bool Loaded { get; set; } = false;
+
+    IEnumerable<S3Object> files = new List<S3Object>();
+
+    protected override async Task OnInitAsync()
+    {
+        await LoadFilesAsync();
+    }
+
+    private async Task LoadFilesAsync()
+    {
+        Loaded = false;
+        files = await S3BrowserService.GetFileListAsync(BucketName, SearchText);
+        Loaded = true;
+    }
+}
