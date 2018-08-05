@@ -14,5 +14,14 @@
     <app>Loading <i class="fas fa-fw fa-spinner fa-spin"></i></app>
 
     <script src="_framework/blazor.server.js"></script>
+    <script>
+        window.downloadFile = (fileName, byteArray) => {
+            var blob = new Blob(byteArray);
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        };
+    </script>
 </body>
 </html>

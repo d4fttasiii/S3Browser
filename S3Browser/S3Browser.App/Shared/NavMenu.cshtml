@@ -1,5 +1,5 @@
 ﻿<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">S3Browser</a>
+    <span class="navbar-brand animated tada"><i class="fab fa-fw fa-aws mr-1"></i> <b>S3</b>Browser</span>
     <button class="navbar-toggler" onclick=@ToggleNavMenu>
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -8,13 +8,13 @@
 <div class=@(collapseNavMenu ? "collapse" : null) onclick=@ToggleNavMenu>
     <ul class="nav flex-column">
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match=NavLinkMatch.All>
-                <i class="fas fa-fw fa-home mr-1" aria-hidden="true"></i> Home
+            <NavLink class="nav-link" href="buckets">
+                <i class="fas fa-fw fa-boxes mr-2" aria-hidden="true"></i> Buckets
             </NavLink>
         </li>
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="buckets">
-                <i class="fas fa-fw fa-hdd mr-1" aria-hidden="true"></i> Buckets
+            <NavLink class="nav-link" href="settings">
+                <i class="fas fa-fw fa-cogs mr-2" aria-hidden="true"></i> Settings
             </NavLink>
         </li>
     </ul>

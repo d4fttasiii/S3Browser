@@ -16,7 +16,6 @@ namespace S3Browser.App
                 SecretKey = "verySecretKey1",
                 ServiceUrl = "http://localhost:8000"
             }));
-
         }
 
         public void Configure(IBlazorApplicationBuilder app)

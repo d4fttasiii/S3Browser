@@ -6,7 +6,7 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="jumbotron w-100">
+        <div class="jumbotron jumbotron-sm w-100">
             <h1 class="display-4">S3 Browser</h1>
             <hr />
             <p class="text-muted">List of buckets</p>
@@ -23,10 +23,10 @@
     <div class="row">
         @if (Loaded)
         {
-            <ul class="list-group">
+            <ul class="list-group w-100">
                 @foreach (var bucket in buckets)
                 {
-                    <li class="list-group-item">
+                    <li class="list-group-item animated fadeInDown">
                         <a href="/buckets/@bucket.BucketName"><i class="fas fa-fw fa-box mr-1"></i> @bucket.BucketName (@bucket.CreationDate)</a>
                     </li>
                 }

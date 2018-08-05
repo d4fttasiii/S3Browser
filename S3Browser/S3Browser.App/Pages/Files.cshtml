@@ -1,19 +1,23 @@
 ﻿@using S3Browser.App.Services
 @using Amazon.S3.Model;
+@using System.Linq;
 
 @page "/buckets/{bucketName}"
 @inject S3BrowserService S3BrowserService
 
 <div class="container-fluid">
     <div class="row">
-        <div class="jumbotron w-100">
+        <div class="jumbotron jumbotron-sm w-100">
             <h1 class="display-4">S3 Browser</h1>
             <hr />
-            <p class="text-muted">List of file from bucket: <b>@BucketName</b></p>
+            <p class="text-muted">List of file from bucket: <b class="text-primary">@BucketName</b></p>
         </div>
     </div>
     <div class="row form-group">
         <div class="input-group">
+            <div class="input-group-prepend">
+                <a class="btn btn-outline-warning" href="/buckets" role="button"><i class="fas fa-fw fa-arrow-circle-left"></i></a>
+            </div>
             <input type="text" class="form-control" placeholder="Search files in bucket by name" bind="@SearchText" />
             <div class="input-group-prepend">
                 <button class="btn btn-outline-primary" type="button" onclick="@LoadFilesAsync"><i class="fas fa-fw @(Loaded ? "fa-search" : "fa-circle-notch fa-spin")"></i></button>
@@ -23,18 +27,31 @@
     <div class="row">
         @if (Loaded)
         {
-            <ul class="list-group">
+            <ul class="list-group w-100">
                 @foreach (var file in files)
                 {
-                    <li class="list-group-item">
-                        <span><i class="fas fa-fw fa-box mr-1"></i> @file.Key</span>
-                        <small>(@file.LastModified)</small> 
+                    <li class="list-group-item list-group-item-action flex-column align-items-start animated fadeInDown">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-fw fa-file mr-1"></i> @file.Key</h6>
+                            <small>@file.LastModified</small>
+                        </div>
+                        <div class="text-right mt-2">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="@(() => DownloadFileAsync(file.Key))">
+                                    <i class="fas fa-fw fa-download"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="@(() => DeleteFileAsync(file.Key))">
+                                    <i class="fas fa-fw fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
                     </li>
                 }
             </ul>
         }
     </div>
 </div>
+
 
 @functions {
 
@@ -43,7 +60,7 @@
     private string SearchText { get; set; } = "";
     private bool Loaded { get; set; } = false;
 
-    IEnumerable<S3Object> files = new List<S3Object>();
+    List<S3Object> files = new List<S3Object>();
 
     protected override async Task OnInitAsync()
     {
@@ -53,7 +70,21 @@
     private async Task LoadFilesAsync()
     {
         Loaded = false;
-        files = await S3BrowserService.GetFileListAsync(BucketName, SearchText);
+        files = (await S3BrowserService.GetFileListAsync(BucketName, SearchText)).ToList();
         Loaded = true;
+    }
+
+    private async Task DownloadFileAsync(string key)
+    {
+        var bytes = await S3BrowserService.GetContentBytesAsync(BucketName, key);
+        var fileName = key.Split('/').Last();
+        await JSRuntime.Current.InvokeAsync<string>("downloadFile", fileName, bytes);
+    }
+
+    private async Task DeleteFileAsync(string key)
+    {
+        var fileToRemove = files.First(f => f.Key == key);
+        files.Remove(fileToRemove);
+        await S3BrowserService.DeleteFileAsync(BucketName, key);
     }
 }

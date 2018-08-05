@@ -121,3 +121,7 @@ app {
         display: block;
     }
 }
+
+.jumbotron.jumbotron-sm {
+    padding: 1rem 2rem;
+}
