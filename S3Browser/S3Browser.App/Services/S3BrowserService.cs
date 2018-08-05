@@ -50,8 +50,8 @@ namespace S3Browser.App.Services
 
             return response.S3Objects
                 .Where(s3o => s3o.Size > 0)
-                .Skip(0)
-                .Take(50);
+                .Skip(skip)
+                .Take(take);
         }
 
         public async Task<byte[]> GetContentBytesAsync(string bucketName, string path)
