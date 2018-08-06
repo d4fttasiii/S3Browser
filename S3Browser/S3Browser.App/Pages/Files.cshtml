@@ -44,82 +44,91 @@
             <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 1))"><i class="fas fa-fw fa-chevron-right"></i></button></li>
         </ul>
     </div>
-    <div class="row mt-3">
+    <div class="row justify-content-center mt-3">
         @if (Loaded)
         {
-            <ul class="list-group w-100">
-                @foreach (var file in files)
-                {
-                    <li class="list-group-item list-group-item-action flex-column align-items-start animated fadeInDown">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1"><i class="fas fa-fw fa-file mr-1"></i> @file.Key</h6>
-                            <small>@file.LastModified</small>
-                        </div>
-                        <div class="text-right mt-2">
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-primary" onclick="@(() => DownloadFileAsync(file.Key))">
-                                    <i class="fas fa-fw fa-download"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" onclick="@(() => DeleteFileAsync(file.Key))">
-                                    <i class="fas fa-fw fa-trash-alt"></i>
-                                </button>
+            @if (files.Any())
+            {
+                <ul class="list-group w-100">
+                    @foreach (var file in files)
+                    {
+                        <li class="list-group-item list-group-item-action flex-column align-items-start animated fadeInDown">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><i class="fas fa-fw fa-file mr-1"></i> @file.Key</h6>
+                                <small>@file.LastModified</small>
                             </div>
-                        </div>
-                    </li>
-                }
-            </ul>
+                            <div class="text-right mt-2">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary" onclick="@(() => DownloadFileAsync(file.Key))">
+                                        <i class="fas fa-fw fa-download"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="@(() => DeleteFileAsync(file.Key))">
+                                        <i class="fas fa-fw fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="lead">
+                    No files found in this bucket <i class="fas fa-fw fa-frown text-danger animated infinite jello"></i>
+                </p>
+            }
         }
     </div>
 </div>
 
 @functions {
 
-private static readonly int[] _elementsPerPageOptions = new[] { 5, 10, 25, 50, 100 };
+    private static readonly int[] _elementsPerPageOptions = new[] { 5, 10, 25, 50, 100 };
 
-[Parameter]
-private string BucketName { get; set; }
-private string SearchText { get; set; } = "";
-private bool Loaded { get; set; } = false;
-private int ElementsPerPage { get; set; } = _elementsPerPageOptions[0];
-private int Page { get; set; } = 0;
+    [Parameter]
+    private string BucketName { get; set; }
+    private string SearchText { get; set; } = "";
+    private bool Loaded { get; set; } = false;
+    private int ElementsPerPage { get; set; } = _elementsPerPageOptions[0];
+    private int Page { get; set; } = 0;
 
-List<S3Object> files = new List<S3Object>();
+    List<S3Object> files = new List<S3Object>();
 
-protected override async Task OnInitAsync()
-{
-    await LoadFilesAsync();
-}
+    protected override async Task OnInitAsync()
+    {
+        await LoadFilesAsync();
+    }
 
-private async Task LoadFilesAsync()
-{
-    Loaded = false;
-    files = (await S3BrowserService.GetFileListAsync(BucketName, SearchText, ElementsPerPage, Page * ElementsPerPage)).ToList();
-    Loaded = true;
-}
+    private async Task LoadFilesAsync()
+    {
+        Loaded = false;
+        files = (await S3BrowserService.GetFileListAsync(BucketName, SearchText, ElementsPerPage, Page * ElementsPerPage)).ToList();
+        Loaded = true;
+    }
 
-private async Task DownloadFileAsync(string key)
-{
-    var bytes = await S3BrowserService.GetContentBytesAsync(BucketName, key);
-    var fileName = key.Split('/').Last();
-    await JSRuntime.Current.InvokeAsync<string>("downloadFile", fileName, bytes);
-}
+    private async Task DownloadFileAsync(string key)
+    {
+        var bytes = await S3BrowserService.GetContentBytesAsync(BucketName, key);
+        var fileName = key.Split('/').Last();
+        await JSRuntime.Current.InvokeAsync<string>("downloadFile", fileName, bytes);
+    }
 
-private async Task DeleteFileAsync(string key)
-{
-    var fileToRemove = files.First(f => f.Key == key);
-    files.Remove(fileToRemove);
-    await S3BrowserService.DeleteFileAsync(BucketName, key);
-}
+    private async Task DeleteFileAsync(string key)
+    {
+        var fileToRemove = files.First(f => f.Key == key);
+        files.Remove(fileToRemove);
+        await S3BrowserService.DeleteFileAsync(BucketName, key);
+    }
 
-private async Task SetElementsPerPage(int elementsPerPage)
-{
-    ElementsPerPage = elementsPerPage;
-    await LoadFilesAsync();
-}
+    private async Task SetElementsPerPage(int elementsPerPage)
+    {
+        ElementsPerPage = elementsPerPage;
+        await LoadFilesAsync();
+    }
 
-private async Task GoToPage(int page)
-{
-    Page = page;
-    await LoadFilesAsync();
-}
+    private async Task GoToPage(int page)
+    {
+        Page = page;
+        await LoadFilesAsync();
+    }
 }
