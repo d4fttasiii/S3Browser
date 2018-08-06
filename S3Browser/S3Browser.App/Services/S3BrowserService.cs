@@ -2,7 +2,6 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using S3Browser.App.Models;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,16 +11,21 @@ namespace S3Browser.App.Services
 {
     public class S3BrowserService
     {
-        private readonly IAmazonS3 _client;
+        private IAmazonS3 _client;
 
         public S3BrowserService(S3Access s3Access)
+        {
+            Connect(s3Access);
+        }
+
+        public void Connect(S3Access s3Access)
         {
             _client = new AmazonS3Client(
                 new BasicAWSCredentials(s3Access.AccessKey, s3Access.SecretKey),
                 new AmazonS3Config
                 {
                     ServiceURL = s3Access.ServiceUrl,
-                    UseHttp = true,
+                    UseHttp = s3Access.UseHttps,
                     ForcePathStyle = true
                 }
             );

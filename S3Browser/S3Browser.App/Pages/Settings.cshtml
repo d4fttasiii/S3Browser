@@ -1,0 +1,70 @@
+﻿@using S3Browser.App.Services
+@using S3Browser.App.Models;
+
+@page "/settings"
+@inject S3BrowserService S3BrowserService
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="jumbotron jumbotron-sm w-100">
+            <h1 class="display-4">S3 Browser</h1>
+            <hr />
+            <p class="text-muted">Setting up the connection</p>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row justify-content-center animated fadeInDown">
+        <div class="col-xs-12 col-sm-6">
+            <div class="form-group">
+                <label for="serviceUrlIn">ServiceUrl</label>
+                <input type="text" class="form-control" id="serviceUrlIn" placeholder="https://s3-<region>.amazonaws.com" bind="@S3Access.ServiceUrl" />
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center animated fadeInDown">
+        <div class="col-xs-12 col-sm-6">
+            <div class="form-group">
+                <label for="accessKeyIn">Access Key</label>
+                <input type="text" class="form-control" id="accessKeyIn" placeholder="Access Key" bind="@S3Access.AccessKey" />
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center animated fadeInDown">
+        <div class="col-xs-12 col-sm-6">
+            <div class="form-group">
+                <label for="secretKeyIn">Secret Key</label>
+                <input type="password" class="form-control" id="secretKeyIn" placeholder="Secret Key" bind="@S3Access.SecretKey" />
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center mt-4 animated fadeInDown">
+        <div class="col-xs-12 col-sm-6 w-100">
+            <div class="form-group text-right w-100">
+                <button type="button" class="btn btn-outline-primary mr-2" onclick="@ToggleUseHttps">
+                    <span class="mr-2">Https</span>
+                    <i class="fas fa-fw @(S3Access.UseHttps ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="@Connect"><i class="fas fa-fw fa-save"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+
+    private S3Access S3Access { get; set; } = new S3Access
+    {
+        ServiceUrl = "http://localhost:8000"
+    };
+
+    private void ToggleUseHttps()
+    {
+        S3Access.UseHttps = !S3Access.UseHttps;
+    }
+
+    private void Connect()
+    {
+        S3BrowserService.Connect(S3Access);
+    }
+}

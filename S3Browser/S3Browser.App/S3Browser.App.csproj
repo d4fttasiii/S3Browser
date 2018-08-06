@@ -14,9 +14,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="0.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Browser" Version="0.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.5.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Pages\Settings.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
     <Content Update="Pages\Files.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
