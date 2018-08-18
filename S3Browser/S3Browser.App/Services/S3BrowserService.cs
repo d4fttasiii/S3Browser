@@ -2,6 +2,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using S3Browser.App.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,8 @@ namespace S3Browser.App.Services
     public class S3BrowserService
     {
         private IAmazonS3 _client;
+
+        public S3Access S3Access { get; private set; }
 
         public S3BrowserService(S3Access s3Access)
         {
@@ -29,6 +32,7 @@ namespace S3Browser.App.Services
                     ForcePathStyle = true
                 }
             );
+            S3Access = s3Access;
         }
 
         public async Task<IEnumerable<S3Bucket>> GetBucketListAsync(string searchText = "")
@@ -43,8 +47,13 @@ namespace S3Browser.App.Services
             return response.Buckets.Where(b => b.BucketName.ToLower().Contains(searchText.ToLower()));
         }
 
-        public async Task<IEnumerable<S3Object>> GetFileListAsync(string bucketName, string prefix = "", int take = 50, int skip = 0)
+        public async Task<IEnumerable<S3Element>> GetFileListAsync(string bucketName, string prefix = "", string filter = "", int take = 50, int skip = 0)
         {
+            if (!string.IsNullOrWhiteSpace(prefix))
+            {
+                prefix = prefix.Last() != '/' ? $"{prefix}/" : prefix;
+            }
+
             var request = new ListObjectsRequest
             {
                 BucketName = bucketName,
@@ -52,10 +61,51 @@ namespace S3Browser.App.Services
             };
             var response = await _client.ListObjectsAsync(request);
 
-            return response.S3Objects
-                .Where(s3o => s3o.Size > 0)
+            var folders = response.S3Objects
+                .Where(o => !string.IsNullOrWhiteSpace(filter) ? o.Key.Contains(filter) : true)
+                .Where(o =>
+                {
+                    var path = string.IsNullOrEmpty(prefix) ? o.Key : o.Key.Replace(prefix, "");
+
+                    return path.Split('/').Count() >= 2;
+                })
+                .GroupBy(o =>
+                {
+                    var path = string.IsNullOrEmpty(prefix) ? o.Key : o.Key.Replace(prefix, "");
+                    return path.Split('/').First();
+                })
+                .Select(g =>
+                {
+                    return new S3Element
+                    {
+                        Key = g.Key,
+                        Path = $"{bucketName}/{prefix}/{g.Key}",
+                        IsFolder = true
+                    };
+                })
+                .ToList()
                 .Skip(skip)
-                .Take(take);
+                .Take(take)
+                ;
+
+            var files = response.S3Objects
+                .Where(s3o => !string.IsNullOrWhiteSpace(filter) ? s3o.Key.Contains(filter) : true)
+                .Where(o =>
+                {
+                    var path = string.IsNullOrEmpty(prefix) ? o.Key : o.Key.Replace(prefix, "");
+
+                    return path.Split('/').Count() == 1;
+                })
+                .Skip(skip)
+                .Take(take - folders.Count())
+                .Select(o => new S3Element
+                {
+                    Key = o.Key,
+                    LastModified = o.LastModified,
+                    IsFolder = false
+                });
+
+            return folders.Union(files);
         }
 
         public async Task<byte[]> GetContentBytesAsync(string bucketName, string path)
@@ -71,6 +121,37 @@ namespace S3Browser.App.Services
                     await ms.WriteAsync(buffer, 0, read);
                 }
                 return ms.ToArray();
+            }
+        }
+
+        public async Task<string> GetContentBase64Async(string bucketName, string path)
+        {
+            byte[] buffer = new byte[16 * 1024];
+
+            using (var stream = await GetStreamAsync(bucketName, path))
+            using (var ms = new MemoryStream())
+            {
+                int read;
+                while ((read = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    await ms.WriteAsync(buffer, 0, read);
+                }
+                var byteArray = ms.ToArray();
+
+                return Convert.ToBase64String(byteArray);
+            }
+        }
+
+        public async Task UploadBytesAsync(string bucketName, string key, byte[] content)
+        {
+            using (Stream stream = new MemoryStream(content))
+            {
+                await _client.PutObjectAsync(new PutObjectRequest
+                {
+                    BucketName = bucketName,
+                    Key = key,
+                    InputStream = stream
+                });
             }
         }
 

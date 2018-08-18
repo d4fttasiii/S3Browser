@@ -1,8 +1,8 @@
-﻿@using S3Browser.App.Services
+﻿@using S3Browser.App.PageControllers
 @using S3Browser.App.Models;
 
 @page "/settings"
-@inject S3BrowserService S3BrowserService
+@inherits SettingsPage
 
 <div class="container-fluid">
     <div class="row">
@@ -50,21 +50,3 @@
         </div>
     </div>
 </div>
-
-@functions {
-
-    private S3Access S3Access { get; set; } = new S3Access
-    {
-        ServiceUrl = "http://localhost:8000"
-    };
-
-    private void ToggleUseHttps()
-    {
-        S3Access.UseHttps = !S3Access.UseHttps;
-    }
-
-    private void Connect()
-    {
-        S3BrowserService.Connect(S3Access);
-    }
-}

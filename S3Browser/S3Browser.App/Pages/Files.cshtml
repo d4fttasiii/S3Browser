@@ -1,9 +1,10 @@
 ﻿@using S3Browser.App.Services
-@using Amazon.S3.Model;
+@using S3Browser.App.PageControllers;
 @using System.Linq;
 
 @page "/buckets/{bucketName}"
-@inject S3BrowserService S3BrowserService
+@page "/buckets/{bucketName}/{prefix}"
+@inherits FilesPage
 
 <div class="container-fluid">
     <div class="row">
@@ -20,56 +21,70 @@
             </div>
             <input type="text" class="form-control" placeholder="Search files in bucket by name" bind="@SearchText" />
             <div class="input-group-prepend">
-                <div class="dropdown">
-                    <button class="btn btn-outline-info dropdown-toggle" type="button" id="elementsPerPage" data-toggle="dropdown">
-                        @ElementsPerPage / page
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="elementsPerPage">
-                        @foreach (var option in _elementsPerPageOptions)
-                        {
-                            <a class="dropdown-item w-100" onclick="@(() => SetElementsPerPage(option))">@option / page</a>
-                        }
-                    </div>
-                </div>
                 <button class="btn btn-outline-primary" type="button" onclick="@LoadFilesAsync"><i class="fas fa-fw @(Loaded ? "fa-search" : "fa-circle-notch fa-spin")"></i></button>
             </div>
         </div>
     </div>
-    <div class="row justify-content-center">
-        <ul class="pagination">
-            <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page - 1))"><i class="fas fa-fw fa-chevron-left"></i></button></li>
-            <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page))">@(Page + 1)</button></li>
-            <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 1))">@(Page + 2)</button></li>
-            <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 2))">@(Page + 3)</button></li>
-            <li class="page-item"><button class="page-link" onclick="@(() => GoToPage(Page + 1))"><i class="fas fa-fw fa-chevron-right"></i></button></li>
-        </ul>
-    </div>
-    <div class="row justify-content-center mt-3">
+    <div class="row justify-content-center pb-3 mt-3">
         @if (Loaded)
         {
-            @if (files.Any())
+            @if (Files.Any())
             {
-                <ul class="list-group w-100">
-                    @foreach (var file in files)
+                <ul class="list-group w-100 mt-2">
+                    @foreach (var file in Files)
                     {
                         <li class="list-group-item list-group-item-action flex-column align-items-start animated fadeInDown">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1"><i class="fas fa-fw fa-file mr-1"></i> @file.Key</h6>
-                                <small>@file.LastModified</small>
-                            </div>
-                            <div class="text-right mt-2">
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-primary" onclick="@(() => DownloadFileAsync(file.Key))">
-                                        <i class="fas fa-fw fa-download"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger" onclick="@(() => DeleteFileAsync(file.Key))">
-                                        <i class="fas fa-fw fa-trash-alt"></i>
-                                    </button>
+                            <div class="row">
+                                <div class="col-md-8 col-lg-10">
+                                    <h6 class="mb-1"><i class="fas fa-fw @(file.IsFolder ? "fa-folder" : "fa-file") mr-1"></i> @file.Key</h6>
+                                    @if (file.LastModified != DateTime.MinValue)
+                                    {
+                                        <small>@file.LastModified</small>
+                                    }
+                                </div>
+                                <div class="col-md-4 col-lg-2">
+                                    @if (!file.IsFolder)
+                                    {
+                                        <div class="text-right">
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button" class="btn btn-outline-primary" onclick="@(() => DownloadFileAsync(file.Key))">
+                                                    <i class="fas fa-fw fa-download"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger" onclick="@(() => DeleteFileAsync(file.Key))">
+                                                    <i class="fas fa-fw fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-right mt-2">
+                                            <a class="btn btn-outline-primary" href="/buckets/@(System.Web.HttpUtility.UrlEncode(file.Path))">
+                                                <i class="fas fa-fw fa-folder-open"></i>
+                                            </a>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </li>
                     }
                 </ul>
+                @if (Loaded && !AllLoaded)
+                {
+                    @if (!AllLoaded)
+                    {
+                        <p class="text-center">
+                            <button class="btn btn-link" onclick="@LoadMoreFilesAsync">load more...</button>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-center">
+                            all objects loaded...
+                        </p>
+                    }
+                }
+
             }
             else
             {
@@ -80,55 +95,3 @@
         }
     </div>
 </div>
-
-@functions {
-
-    private static readonly int[] _elementsPerPageOptions = new[] { 5, 10, 25, 50, 100 };
-
-    [Parameter]
-    private string BucketName { get; set; }
-    private string SearchText { get; set; } = "";
-    private bool Loaded { get; set; } = false;
-    private int ElementsPerPage { get; set; } = _elementsPerPageOptions[0];
-    private int Page { get; set; } = 0;
-
-    List<S3Object> files = new List<S3Object>();
-
-    protected override async Task OnInitAsync()
-    {
-        await LoadFilesAsync();
-    }
-
-    private async Task LoadFilesAsync()
-    {
-        Loaded = false;
-        files = (await S3BrowserService.GetFileListAsync(BucketName, SearchText, ElementsPerPage, Page * ElementsPerPage)).ToList();
-        Loaded = true;
-    }
-
-    private async Task DownloadFileAsync(string key)
-    {
-        var bytes = await S3BrowserService.GetContentBytesAsync(BucketName, key);
-        var fileName = key.Split('/').Last();
-        await JSRuntime.Current.InvokeAsync<string>("downloadFile", fileName, bytes);
-    }
-
-    private async Task DeleteFileAsync(string key)
-    {
-        var fileToRemove = files.First(f => f.Key == key);
-        files.Remove(fileToRemove);
-        await S3BrowserService.DeleteFileAsync(BucketName, key);
-    }
-
-    private async Task SetElementsPerPage(int elementsPerPage)
-    {
-        ElementsPerPage = elementsPerPage;
-        await LoadFilesAsync();
-    }
-
-    private async Task GoToPage(int page)
-    {
-        Page = page;
-        await LoadFilesAsync();
-    }
-}

@@ -1,8 +1,7 @@
-﻿@using S3Browser.App.Services
-@using Amazon.S3.Model;
+﻿@using S3Browser.App.PageControllers
 
 @page "/buckets"
-@inject S3BrowserService S3BrowserService
+@inherits BucketsPage
 
 <div class="container-fluid">
     <div class="row">
@@ -23,10 +22,10 @@
     <div class="row mt-3 justify-content-center">
         @if (Loaded)
         {
-            if (buckets.Any())
+            if (Buckets.Any())
             {
                 <ul class="list-group w-100">
-                    @foreach (var bucket in buckets)
+                    @foreach (var bucket in Buckets)
                     {
                         <li class="list-group-item animated fadeInDown">
                             <a href="/buckets/@bucket.BucketName"><i class="fas fa-fw fa-box mr-1"></i> @bucket.BucketName (@bucket.CreationDate)</a>
@@ -43,23 +42,3 @@
         }
     </div>
 </div>
-
-@functions {
-
-    private string SearchText { get; set; } = "";
-    private bool Loaded { get; set; } = false;
-
-    IEnumerable<S3Bucket> buckets = new List<S3Bucket>();
-
-    protected override async Task OnInitAsync()
-    {
-        await LoadBucketListAsync();
-    }
-
-    private async Task LoadBucketListAsync()
-    {
-        Loaded = false;
-        buckets = await S3BrowserService.GetBucketListAsync(SearchText);
-        Loaded = true;
-    }
-}

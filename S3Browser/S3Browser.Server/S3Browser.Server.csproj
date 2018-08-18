@@ -20,4 +20,9 @@
     </Content>
   </ItemGroup>
 
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /y &quot;..\start.ps1&quot; &quot;$(TargetDir)&quot;" />
+  </Target>
+
 </Project>
