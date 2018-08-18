@@ -25,4 +25,9 @@
         }        
     };
 
+    // Navigating with forcing a page reload
+    window.navigateTo = (path) => {
+        location.href = path;
+    };
+
 })();
