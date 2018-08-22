@@ -5,6 +5,8 @@ namespace S3Browser.App.Models
     {
         public string Key { get; set; }
 
+        public string Name { get; set; }
+
         public string Path { get; set; }
 
         public bool IsFolder { get; set; }

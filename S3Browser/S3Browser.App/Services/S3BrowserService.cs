@@ -79,7 +79,8 @@ namespace S3Browser.App.Services
                     return new S3Element
                     {
                         Key = g.Key,
-                        Path = $"{bucketName}/{prefix}/{g.Key}",
+                        Name = g.Key,
+                        // Path = $"{bucketName}/{prefix}/{g.Key}",
                         IsFolder = true
                     };
                 })
@@ -94,13 +95,14 @@ namespace S3Browser.App.Services
                 {
                     var path = string.IsNullOrEmpty(prefix) ? o.Key : o.Key.Replace(prefix, "");
 
-                    return path.Split('/').Count() == 1;
+                    return path.Split('/').Count() == 1 && !string.IsNullOrWhiteSpace(path);
                 })
                 .Skip(skip)
                 .Take(take - folders.Count())
                 .Select(o => new S3Element
                 {
                     Key = o.Key,
+                    Name = o.Key.Split('/').Last(),
                     LastModified = o.LastModified,
                     IsFolder = false
                 });

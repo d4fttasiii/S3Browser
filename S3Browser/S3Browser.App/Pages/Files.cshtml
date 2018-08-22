@@ -1,5 +1,4 @@
-﻿@using S3Browser.App.Services
-@using S3Browser.App.PageControllers;
+﻿@using S3Browser.App.PageControllers;
 @using System.Linq;
 
 @page "/buckets/{bucketName}"
@@ -47,7 +46,7 @@
                         <li class="list-group-item list-group-item-action flex-column align-items-start animated fadeInDown">
                             <div class="row">
                                 <div class="col-md-8 col-lg-10">
-                                    <h6 class="mb-1"><i class="fas fa-fw @(element.IsFolder ? "fa-folder" : "fa-file") mr-1"></i> @element.Key</h6>
+                                    <h6 class="mb-1"><i class="fas fa-fw @(element.IsFolder ? "fa-folder" : "fa-file") mr-1"></i> @element.Name</h6>
                                     @if (element.LastModified != DateTime.MinValue)
                                     {
                                         <small>@element.LastModified</small>
